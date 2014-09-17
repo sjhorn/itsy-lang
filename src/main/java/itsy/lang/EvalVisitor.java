@@ -1,7 +1,38 @@
 package itsy.lang;
 
+import itsy.antlr4.ItsyBaseVisitor;
+import itsy.antlr4.ItsyParser;
+import itsy.antlr4.ItsyParser.AndExpressionContext;
+import itsy.antlr4.ItsyParser.AssertFunctionCallContext;
+import itsy.antlr4.ItsyParser.BlockContext;
+import itsy.antlr4.ItsyParser.DivideExpressionContext;
+import itsy.antlr4.ItsyParser.ExpressionContext;
+import itsy.antlr4.ItsyParser.ExpressionExpressionContext;
+import itsy.antlr4.ItsyParser.ForStatementContext;
+import itsy.antlr4.ItsyParser.FunctionCallExpressionContext;
+import itsy.antlr4.ItsyParser.FunctionDeclContext;
+import itsy.antlr4.ItsyParser.GtEqExpressionContext;
+import itsy.antlr4.ItsyParser.GtExpressionContext;
+import itsy.antlr4.ItsyParser.IdentifierFunctionCallContext;
+import itsy.antlr4.ItsyParser.InExpressionContext;
+import itsy.antlr4.ItsyParser.InputExpressionContext;
+import itsy.antlr4.ItsyParser.ListContext;
+import itsy.antlr4.ItsyParser.ListExpressionContext;
+import itsy.antlr4.ItsyParser.LtEqExpressionContext;
+import itsy.antlr4.ItsyParser.LtExpressionContext;
+import itsy.antlr4.ItsyParser.ModulusExpressionContext;
+import itsy.antlr4.ItsyParser.MultiplyExpressionContext;
+import itsy.antlr4.ItsyParser.NotExpressionContext;
+import itsy.antlr4.ItsyParser.OrExpressionContext;
+import itsy.antlr4.ItsyParser.PowerExpressionContext;
+import itsy.antlr4.ItsyParser.SizeFunctionCallContext;
+import itsy.antlr4.ItsyParser.StatementContext;
+import itsy.antlr4.ItsyParser.SubtractExpressionContext;
+import itsy.antlr4.ItsyParser.TernaryExpressionContext;
+import itsy.antlr4.ItsyParser.UnaryMinusExpressionContext;
+import itsy.antlr4.ItsyParser.WhileStatementContext;
+
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
@@ -14,37 +45,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
-import tl.antlr4.TLParser.AndExpressionContext;
-import tl.antlr4.TLParser.AssertFunctionCallContext;
-import tl.antlr4.TLParser.BlockContext;
-import tl.antlr4.TLParser.DivideExpressionContext;
-import tl.antlr4.TLParser.ExpressionContext;
-import tl.antlr4.TLParser.ExpressionExpressionContext;
-import tl.antlr4.TLParser.ForStatementContext;
-import tl.antlr4.TLParser.FunctionCallExpressionContext;
-import tl.antlr4.TLParser.FunctionDeclContext;
-import tl.antlr4.TLParser.GtEqExpressionContext;
-import tl.antlr4.TLParser.GtExpressionContext;
-import tl.antlr4.TLParser.IdentifierFunctionCallContext;
-import tl.antlr4.TLParser.InExpressionContext;
-import tl.antlr4.TLParser.InputExpressionContext;
-import tl.antlr4.TLParser.ListContext;
-import tl.antlr4.TLParser.ListExpressionContext;
-import tl.antlr4.TLParser.LtEqExpressionContext;
-import tl.antlr4.TLParser.LtExpressionContext;
-import tl.antlr4.TLParser.ModulusExpressionContext;
-import tl.antlr4.TLParser.MultiplyExpressionContext;
-import tl.antlr4.TLParser.NotExpressionContext;
-import tl.antlr4.TLParser.OrExpressionContext;
-import tl.antlr4.TLParser.PowerExpressionContext;
-import tl.antlr4.TLParser.SizeFunctionCallContext;
-import tl.antlr4.TLParser.StatementContext;
-import tl.antlr4.TLParser.SubtractExpressionContext;
-import tl.antlr4.TLParser.TernaryExpressionContext;
-import tl.antlr4.TLParser.UnaryMinusExpressionContext;
-import tl.antlr4.TLParser.WhileStatementContext;
-
-public class EvalVisitor extends TLBaseVisitor<TLValue> {
+public class EvalVisitor extends ItsyBaseVisitor<ItsyValue> {
 	private static ReturnValue returnValue = new ReturnValue();
     private Scope scope;
     private Map<String, Function> functions;
@@ -56,59 +57,59 @@ public class EvalVisitor extends TLBaseVisitor<TLValue> {
 
     // functionDecl
     @Override
-    public TLValue visitFunctionDecl(FunctionDeclContext ctx) {
-        return TLValue.VOID;
+    public ItsyValue visitFunctionDecl(FunctionDeclContext ctx) {
+        return ItsyValue.VOID;
     }
     
     // list: '[' exprList? ']'
     @Override
-    public TLValue visitList(ListContext ctx) {
-        List<TLValue> list = new ArrayList<TLValue>();
+    public ItsyValue visitList(ListContext ctx) {
+        List<ItsyValue> list = new ArrayList<ItsyValue>();
         if (ctx.exprList() != null) {
 	        for(ExpressionContext ex: ctx.exprList().expression()) {
 	            list.add(this.visit(ex));
 	        }
         }
-        return new TLValue(list);
+        return new ItsyValue(list);
     }
     
     
     // '-' expression                           #unaryMinusExpression
     @Override
-    public TLValue visitUnaryMinusExpression(UnaryMinusExpressionContext ctx) {
-    	TLValue v = this.visit(ctx.expression());
+    public ItsyValue visitUnaryMinusExpression(UnaryMinusExpressionContext ctx) {
+    	ItsyValue v = this.visit(ctx.expression());
     	if (!v.isNumber()) {
     	    throw new EvalException(ctx);
         }
-    	return new TLValue(-1 * v.asDouble());
+    	return new ItsyValue(-1 * v.asDouble());
     }
 
     // '!' expression                           #notExpression
     @Override
-    public TLValue visitNotExpression(NotExpressionContext ctx) {
-    	TLValue v = this.visit(ctx.expression());
+    public ItsyValue visitNotExpression(NotExpressionContext ctx) {
+    	ItsyValue v = this.visit(ctx.expression());
     	if(!v.isBoolean()) {
     	    throw new EvalException(ctx);
         }
-    	return new TLValue(!v.asBoolean());
+    	return new ItsyValue(!v.asBoolean());
     }
 
     // expression '^' expression                #powerExpression
     @Override
-    public TLValue visitPowerExpression(PowerExpressionContext ctx) {
-    	TLValue lhs = this.visit(ctx.expression(0));
-    	TLValue rhs = this.visit(ctx.expression(1));
+    public ItsyValue visitPowerExpression(PowerExpressionContext ctx) {
+    	ItsyValue lhs = this.visit(ctx.expression(0));
+    	ItsyValue rhs = this.visit(ctx.expression(1));
     	if (lhs.isNumber() && rhs.isNumber()) {
-    		return new TLValue(Math.pow(lhs.asDouble(), rhs.asDouble()));
+    		return new ItsyValue(Math.pow(lhs.asDouble(), rhs.asDouble()));
     	}
     	throw new EvalException(ctx);
     }
 
     // expression '*' expression                #multiplyExpression
     @Override
-    public TLValue visitMultiplyExpression(MultiplyExpressionContext ctx) {
-    	TLValue lhs = this.visit(ctx.expression(0));
-    	TLValue rhs = this.visit(ctx.expression(1));
+    public ItsyValue visitMultiplyExpression(MultiplyExpressionContext ctx) {
+    	ItsyValue lhs = this.visit(ctx.expression(0));
+    	ItsyValue rhs = this.visit(ctx.expression(1));
     	if(lhs == null || rhs == null) {
     		System.err.println("lhs "+ lhs+ " rhs "+rhs);
     	    throw new EvalException(ctx);
@@ -116,7 +117,7 @@ public class EvalVisitor extends TLBaseVisitor<TLValue> {
     	
     	// number * number
         if(lhs.isNumber() && rhs.isNumber()) {
-            return new TLValue(lhs.asDouble() * rhs.asDouble());
+            return new ItsyValue(lhs.asDouble() * rhs.asDouble());
         }
 
         // string * number
@@ -126,48 +127,48 @@ public class EvalVisitor extends TLBaseVisitor<TLValue> {
             for(int i = 0; i < stop; i++) {
                 str.append(lhs.asString());
             }
-            return new TLValue(str.toString());
+            return new ItsyValue(str.toString());
         }
 
         // list * number
         if(lhs.isList() && rhs.isNumber()) {
-            List<TLValue> total = new ArrayList<TLValue>();
+            List<ItsyValue> total = new ArrayList<ItsyValue>();
             int stop = rhs.asDouble().intValue();
             for(int i = 0; i < stop; i++) {
                 total.addAll(lhs.asList());
             }
-            return new TLValue(total);
+            return new ItsyValue(total);
         }    	
     	throw new EvalException(ctx);
     }
 
     // expression '/' expression                #divideExpression
     @Override
-    public TLValue visitDivideExpression(DivideExpressionContext ctx) {
-    	TLValue lhs = this.visit(ctx.expression(0));
-    	TLValue rhs = this.visit(ctx.expression(1));
+    public ItsyValue visitDivideExpression(DivideExpressionContext ctx) {
+    	ItsyValue lhs = this.visit(ctx.expression(0));
+    	ItsyValue rhs = this.visit(ctx.expression(1));
     	if (lhs.isNumber() && rhs.isNumber()) {
-    		return new TLValue(lhs.asDouble() / rhs.asDouble());
+    		return new ItsyValue(lhs.asDouble() / rhs.asDouble());
     	}
     	throw new EvalException(ctx);
     }
 
     // expression '%' expression                #modulusExpression
 	@Override
-	public TLValue visitModulusExpression(ModulusExpressionContext ctx) {
-		TLValue lhs = this.visit(ctx.expression(0));
-    	TLValue rhs = this.visit(ctx.expression(1));
+	public ItsyValue visitModulusExpression(ModulusExpressionContext ctx) {
+		ItsyValue lhs = this.visit(ctx.expression(0));
+    	ItsyValue rhs = this.visit(ctx.expression(1));
     	if (lhs.isNumber() && rhs.isNumber()) {
-    		return new TLValue(lhs.asDouble() % rhs.asDouble());
+    		return new ItsyValue(lhs.asDouble() % rhs.asDouble());
     	}
     	throw new EvalException(ctx);
 	}
 	
     // expression '+' expression                #addExpression
     @Override
-    public TLValue visitAddExpression(@NotNull TLParser.AddExpressionContext ctx) {
-        TLValue lhs = this.visit(ctx.expression(0));
-        TLValue rhs = this.visit(ctx.expression(1));
+    public ItsyValue visitAddExpression(@NotNull ItsyParser.AddExpressionContext ctx) {
+        ItsyValue lhs = this.visit(ctx.expression(0));
+        ItsyValue rhs = this.visit(ctx.expression(1));
         
         if(lhs == null || rhs == null) {
             throw new EvalException(ctx);
@@ -175,199 +176,199 @@ public class EvalVisitor extends TLBaseVisitor<TLValue> {
         
         // number + number
         if(lhs.isNumber() && rhs.isNumber()) {
-            return new TLValue(lhs.asDouble() + rhs.asDouble());
+            return new ItsyValue(lhs.asDouble() + rhs.asDouble());
         }
         
         // list + any
         if(lhs.isList()) {
-            List<TLValue> list = lhs.asList();
+            List<ItsyValue> list = lhs.asList();
             list.add(rhs);
-            return new TLValue(list);
+            return new ItsyValue(list);
         }
 
         // string + any
         if(lhs.isString()) {
-            return new TLValue(lhs.asString() + "" + rhs.toString());
+            return new ItsyValue(lhs.asString() + "" + rhs.toString());
         }
 
         // any + string
         if(rhs.isString()) {
-            return new TLValue(lhs.toString() + "" + rhs.asString());
+            return new ItsyValue(lhs.toString() + "" + rhs.asString());
         }
         
-        return new TLValue(lhs.toString() + rhs.toString());
+        return new ItsyValue(lhs.toString() + rhs.toString());
     }
 
     // expression '-' expression                #subtractExpression
     @Override
-    public TLValue visitSubtractExpression(SubtractExpressionContext ctx) {
-    	TLValue lhs = this.visit(ctx.expression(0));
-    	TLValue rhs = this.visit(ctx.expression(1));
+    public ItsyValue visitSubtractExpression(SubtractExpressionContext ctx) {
+    	ItsyValue lhs = this.visit(ctx.expression(0));
+    	ItsyValue rhs = this.visit(ctx.expression(1));
     	if (lhs.isNumber() && rhs.isNumber()) {
-    		return new TLValue(lhs.asDouble() - rhs.asDouble());
+    		return new ItsyValue(lhs.asDouble() - rhs.asDouble());
     	}
     	if (lhs.isList()) {
-            List<TLValue> list = lhs.asList();
+            List<ItsyValue> list = lhs.asList();
             list.remove(rhs);
-            return new TLValue(list);
+            return new ItsyValue(list);
         }
     	throw new EvalException(ctx);
     }
 
     // expression '>=' expression               #gtEqExpression
     @Override
-    public TLValue visitGtEqExpression(GtEqExpressionContext ctx) {
-    	TLValue lhs = this.visit(ctx.expression(0));
-    	TLValue rhs = this.visit(ctx.expression(1));
+    public ItsyValue visitGtEqExpression(GtEqExpressionContext ctx) {
+    	ItsyValue lhs = this.visit(ctx.expression(0));
+    	ItsyValue rhs = this.visit(ctx.expression(1));
     	if (lhs.isNumber() && rhs.isNumber()) {
-    		return new TLValue(lhs.asDouble() >= rhs.asDouble());
+    		return new ItsyValue(lhs.asDouble() >= rhs.asDouble());
     	}
     	if(lhs.isString() && rhs.isString()) {
-            return new TLValue(lhs.asString().compareTo(rhs.asString()) >= 0);
+            return new ItsyValue(lhs.asString().compareTo(rhs.asString()) >= 0);
         }
     	throw new EvalException(ctx);
     }
 
     // expression '<=' expression               #ltEqExpression
     @Override
-    public TLValue visitLtEqExpression(LtEqExpressionContext ctx) {
-    	TLValue lhs = this.visit(ctx.expression(0));
-    	TLValue rhs = this.visit(ctx.expression(1));
+    public ItsyValue visitLtEqExpression(LtEqExpressionContext ctx) {
+    	ItsyValue lhs = this.visit(ctx.expression(0));
+    	ItsyValue rhs = this.visit(ctx.expression(1));
     	if (lhs.isNumber() && rhs.isNumber()) {
-    		return new TLValue(lhs.asDouble() <= rhs.asDouble());
+    		return new ItsyValue(lhs.asDouble() <= rhs.asDouble());
     	}
     	if(lhs.isString() && rhs.isString()) {
-            return new TLValue(lhs.asString().compareTo(rhs.asString()) <= 0);
+            return new ItsyValue(lhs.asString().compareTo(rhs.asString()) <= 0);
         }
     	throw new EvalException(ctx);
     }
 
     // expression '>' expression                #gtExpression
     @Override
-    public TLValue visitGtExpression(GtExpressionContext ctx) {
-    	TLValue lhs = this.visit(ctx.expression(0));
-    	TLValue rhs = this.visit(ctx.expression(1));
+    public ItsyValue visitGtExpression(GtExpressionContext ctx) {
+    	ItsyValue lhs = this.visit(ctx.expression(0));
+    	ItsyValue rhs = this.visit(ctx.expression(1));
     	if (lhs.isNumber() && rhs.isNumber()) {
-    		return new TLValue(lhs.asDouble() > rhs.asDouble());
+    		return new ItsyValue(lhs.asDouble() > rhs.asDouble());
     	}
     	if(lhs.isString() && rhs.isString()) {
-            return new TLValue(lhs.asString().compareTo(rhs.asString()) > 0);
+            return new ItsyValue(lhs.asString().compareTo(rhs.asString()) > 0);
         }
     	throw new EvalException(ctx);
     }
 
     // expression '<' expression                #ltExpression
     @Override
-    public TLValue visitLtExpression(LtExpressionContext ctx) {
-    	TLValue lhs = this.visit(ctx.expression(0));
-    	TLValue rhs = this.visit(ctx.expression(1));
+    public ItsyValue visitLtExpression(LtExpressionContext ctx) {
+    	ItsyValue lhs = this.visit(ctx.expression(0));
+    	ItsyValue rhs = this.visit(ctx.expression(1));
     	if (lhs.isNumber() && rhs.isNumber()) {
-    		return new TLValue(lhs.asDouble() < rhs.asDouble());
+    		return new ItsyValue(lhs.asDouble() < rhs.asDouble());
     	}
     	if(lhs.isString() && rhs.isString()) {
-            return new TLValue(lhs.asString().compareTo(rhs.asString()) < 0);
+            return new ItsyValue(lhs.asString().compareTo(rhs.asString()) < 0);
         }
     	throw new EvalException(ctx);
     }
 
     // expression '==' expression               #eqExpression
     @Override
-    public TLValue visitEqExpression(@NotNull TLParser.EqExpressionContext ctx) {
-        TLValue lhs = this.visit(ctx.expression(0));
-        TLValue rhs = this.visit(ctx.expression(1));
+    public ItsyValue visitEqExpression(@NotNull ItsyParser.EqExpressionContext ctx) {
+        ItsyValue lhs = this.visit(ctx.expression(0));
+        ItsyValue rhs = this.visit(ctx.expression(1));
         if (lhs == null) {
         	throw new EvalException(ctx);
         }
-        return new TLValue(lhs.equals(rhs));
+        return new ItsyValue(lhs.equals(rhs));
     }
 
     // expression '!=' expression               #notEqExpression
     @Override
-    public TLValue visitNotEqExpression(@NotNull TLParser.NotEqExpressionContext ctx) {
-        TLValue lhs = this.visit(ctx.expression(0));
-        TLValue rhs = this.visit(ctx.expression(1));
-        return new TLValue(!lhs.equals(rhs));
+    public ItsyValue visitNotEqExpression(@NotNull ItsyParser.NotEqExpressionContext ctx) {
+        ItsyValue lhs = this.visit(ctx.expression(0));
+        ItsyValue rhs = this.visit(ctx.expression(1));
+        return new ItsyValue(!lhs.equals(rhs));
     }
 
     // expression '&&' expression               #andExpression
     @Override
-    public TLValue visitAndExpression(AndExpressionContext ctx) {
-    	TLValue lhs = this.visit(ctx.expression(0));
-    	TLValue rhs = this.visit(ctx.expression(1));
+    public ItsyValue visitAndExpression(AndExpressionContext ctx) {
+    	ItsyValue lhs = this.visit(ctx.expression(0));
+    	ItsyValue rhs = this.visit(ctx.expression(1));
     	
     	if(!lhs.isBoolean() || !rhs.isBoolean()) {
     	    throw new EvalException(ctx);
         }
-		return new TLValue(lhs.asBoolean() && rhs.asBoolean());
+		return new ItsyValue(lhs.asBoolean() && rhs.asBoolean());
     }
 
     // expression '||' expression               #orExpression
     @Override
-    public TLValue visitOrExpression(OrExpressionContext ctx) {
-    	TLValue lhs = this.visit(ctx.expression(0));
-    	TLValue rhs = this.visit(ctx.expression(1));
+    public ItsyValue visitOrExpression(OrExpressionContext ctx) {
+    	ItsyValue lhs = this.visit(ctx.expression(0));
+    	ItsyValue rhs = this.visit(ctx.expression(1));
     	
     	if(!lhs.isBoolean() || !rhs.isBoolean()) {
     	    throw new EvalException(ctx);
         }
-		return new TLValue(lhs.asBoolean() || rhs.asBoolean());
+		return new ItsyValue(lhs.asBoolean() || rhs.asBoolean());
     }
 
     // expression '?' expression ':' expression #ternaryExpression
     @Override
-    public TLValue visitTernaryExpression(TernaryExpressionContext ctx) {
-    	TLValue condition = this.visit(ctx.expression(0));
+    public ItsyValue visitTernaryExpression(TernaryExpressionContext ctx) {
+    	ItsyValue condition = this.visit(ctx.expression(0));
     	if (condition.asBoolean()) {
-    		return new TLValue(this.visit(ctx.expression(1)));
+    		return new ItsyValue(this.visit(ctx.expression(1)));
     	} else {
-    		return new TLValue(this.visit(ctx.expression(2)));
+    		return new ItsyValue(this.visit(ctx.expression(2)));
     	}
     }
 
     // expression In expression                 #inExpression
 	@Override
-	public TLValue visitInExpression(InExpressionContext ctx) {
-		TLValue lhs = this.visit(ctx.expression(0));
-    	TLValue rhs = this.visit(ctx.expression(1));
+	public ItsyValue visitInExpression(InExpressionContext ctx) {
+		ItsyValue lhs = this.visit(ctx.expression(0));
+    	ItsyValue rhs = this.visit(ctx.expression(1));
     	
     	if (rhs.isList()) {
-    		for(TLValue val: rhs.asList()) {
+    		for(ItsyValue val: rhs.asList()) {
     			if (val.equals(lhs)) {
-    				return new TLValue(true);
+    				return new ItsyValue(true);
     			}
     		}
-    		return new TLValue(false);
+    		return new ItsyValue(false);
     	}
     	throw new EvalException(ctx);
 	}
 	
     // Number                                   #numberExpression
     @Override
-    public TLValue visitNumberExpression(@NotNull TLParser.NumberExpressionContext ctx) {
-        return new TLValue(Double.valueOf(ctx.getText()));
+    public ItsyValue visitNumberExpression(@NotNull ItsyParser.NumberExpressionContext ctx) {
+        return new ItsyValue(Double.valueOf(ctx.getText()));
     }
 
     // Bool                                     #boolExpression
     @Override
-    public TLValue visitBoolExpression(@NotNull TLParser.BoolExpressionContext ctx) {
-        return new TLValue(Boolean.valueOf(ctx.getText()));
+    public ItsyValue visitBoolExpression(@NotNull ItsyParser.BoolExpressionContext ctx) {
+        return new ItsyValue(Boolean.valueOf(ctx.getText()));
     }
 
     // Null                                     #nullExpression
     @Override
-    public TLValue visitNullExpression(@NotNull TLParser.NullExpressionContext ctx) {
-        return TLValue.NULL;
+    public ItsyValue visitNullExpression(@NotNull ItsyParser.NullExpressionContext ctx) {
+        return ItsyValue.NULL;
     }
 
-    private TLValue resolveIndexes(ParserRuleContext ctx, TLValue val, List<ExpressionContext> indexes) {
+    private ItsyValue resolveIndexes(ParserRuleContext ctx, ItsyValue val, List<ExpressionContext> indexes) {
     	for (ExpressionContext ec: indexes) {
-    		TLValue idx = this.visit(ec);
+    		ItsyValue idx = this.visit(ec);
     		if (!idx.isNumber() || (!val.isList() && !val.isString()) ) {
         		throw new EvalException("Problem resolving indexes on "+val+" at "+idx, ec);
     		}
     		int i = idx.asDouble().intValue();
     		if (val.isString()) {
-    			val = new TLValue(val.asString().substring(i, i+1));
+    			val = new ItsyValue(val.asString().substring(i, i+1));
     		} else {
     			val = val.asList().get(i);
     		}
@@ -375,19 +376,19 @@ public class EvalVisitor extends TLBaseVisitor<TLValue> {
     	return val;
     }
     
-    private void setAtIndex(ParserRuleContext ctx, List<ExpressionContext> indexes, TLValue val, TLValue newVal) {
+    private void setAtIndex(ParserRuleContext ctx, List<ExpressionContext> indexes, ItsyValue val, ItsyValue newVal) {
     	if (!val.isList()) {
     		throw new EvalException(ctx);
     	}
     	// TODO some more list size checking in here
     	for (int i = 0; i < indexes.size() - 1; i++) {
-    		TLValue idx = this.visit(indexes.get(i));
+    		ItsyValue idx = this.visit(indexes.get(i));
     		if (!idx.isNumber()) {
         		throw new EvalException(ctx);
     		}
     		val = val.asList().get(idx.asDouble().intValue());
     	}
-    	TLValue idx = this.visit(indexes.get(indexes.size() - 1));
+    	ItsyValue idx = this.visit(indexes.get(indexes.size() - 1));
 		if (!idx.isNumber()) {
     		throw new EvalException(ctx);
 		}
@@ -396,8 +397,8 @@ public class EvalVisitor extends TLBaseVisitor<TLValue> {
     
     // functionCall indexes?                    #functionCallExpression
     @Override
-    public TLValue visitFunctionCallExpression(FunctionCallExpressionContext ctx) {
-    	TLValue val = this.visit(ctx.functionCall());
+    public ItsyValue visitFunctionCallExpression(FunctionCallExpressionContext ctx) {
+    	ItsyValue val = this.visit(ctx.functionCall());
     	if (ctx.indexes() != null) {
         	List<ExpressionContext> exps = ctx.indexes().expression();
         	val = resolveIndexes(ctx, val, exps);
@@ -407,8 +408,8 @@ public class EvalVisitor extends TLBaseVisitor<TLValue> {
 
     // list indexes?                            #listExpression
     @Override
-    public TLValue visitListExpression(ListExpressionContext ctx) {
-    	TLValue val = this.visit(ctx.list());
+    public ItsyValue visitListExpression(ListExpressionContext ctx) {
+    	ItsyValue val = this.visit(ctx.list());
     	if (ctx.indexes() != null) {
         	List<ExpressionContext> exps = ctx.indexes().expression();
         	val = resolveIndexes(ctx, val, exps);
@@ -418,9 +419,9 @@ public class EvalVisitor extends TLBaseVisitor<TLValue> {
 
     // Identifier indexes?                      #identifierExpression
     @Override
-    public TLValue visitIdentifierExpression(@NotNull TLParser.IdentifierExpressionContext ctx) {
-        String id = ctx.Identifier().getText();
-        TLValue val = scope.resolve(id);
+    public ItsyValue visitIdentifierExpression(@NotNull ItsyParser.IdentifierExpressionContext ctx) {
+        String id = ctx.IDENTIFIER().getText();
+        ItsyValue val = scope.resolve(id);
         
         if (ctx.indexes() != null) {
         	List<ExpressionContext> exps = ctx.indexes().expression();
@@ -431,10 +432,10 @@ public class EvalVisitor extends TLBaseVisitor<TLValue> {
 
     // String indexes?                          #stringExpression
     @Override
-    public TLValue visitStringExpression(@NotNull TLParser.StringExpressionContext ctx) {
+    public ItsyValue visitStringExpression(@NotNull ItsyParser.StringExpressionContext ctx) {
         String text = ctx.getText();
         text = text.substring(1, text.length() - 1).replaceAll("\\\\(.)", "$1");
-        TLValue val = new TLValue(text);
+        ItsyValue val = new ItsyValue(text);
         if (ctx.indexes() != null) {
         	List<ExpressionContext> exps = ctx.indexes().expression();
         	val = resolveIndexes(ctx, val, exps);
@@ -444,8 +445,8 @@ public class EvalVisitor extends TLBaseVisitor<TLValue> {
 
     // '(' expression ')' indexes?              #expressionExpression
     @Override
-    public TLValue visitExpressionExpression(ExpressionExpressionContext ctx) {
-        TLValue val = this.visit(ctx.expression());
+    public ItsyValue visitExpressionExpression(ExpressionExpressionContext ctx) {
+        ItsyValue val = this.visit(ctx.expression());
         if (ctx.indexes() != null) {
         	List<ExpressionContext> exps = ctx.indexes().expression();
         	val = resolveIndexes(ctx, val, exps);
@@ -455,16 +456,16 @@ public class EvalVisitor extends TLBaseVisitor<TLValue> {
 
     // Input '(' String? ')'                    #inputExpression
     @Override
-    public TLValue visitInputExpression(InputExpressionContext ctx) {
-    	TerminalNode inputString = ctx.String();
+    public ItsyValue visitInputExpression(InputExpressionContext ctx) {
+    	TerminalNode inputString = ctx.STRING();
 		try {
 			if (inputString != null) {
 				String text = inputString.getText();
 		        text = text.substring(1, text.length() - 1).replaceAll("\\\\(.)", "$1");
-				return new TLValue(new String(Files.readAllBytes(Paths.get(text))));
+				return new ItsyValue(new String(Files.readAllBytes(Paths.get(text))));
 			} else {
 				BufferedReader buffer = new BufferedReader(new InputStreamReader(System.in));
-				return new TLValue(buffer.readLine());
+				return new ItsyValue(buffer.readLine());
 			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -476,24 +477,24 @@ public class EvalVisitor extends TLBaseVisitor<TLValue> {
     // : Identifier indexes? '=' expression
     // ;
     @Override
-    public TLValue visitAssignment(@NotNull TLParser.AssignmentContext ctx) {
-        TLValue newVal = this.visit(ctx.expression());
+    public ItsyValue visitAssignment(@NotNull ItsyParser.AssignmentContext ctx) {
+        ItsyValue newVal = this.visit(ctx.expression());
         if (ctx.indexes() != null) {
-        	TLValue val = scope.resolve(ctx.Identifier().getText());
+        	ItsyValue val = scope.resolve(ctx.IDENTIFIER().getText());
         	List<ExpressionContext> exps = ctx.indexes().expression();
         	setAtIndex(ctx, exps, val, newVal);
         } else {
-        	String id = ctx.Identifier().getText();        	
+        	String id = ctx.IDENTIFIER().getText();        	
         	scope.assign(id, newVal);
         }
-        return TLValue.VOID;
+        return ItsyValue.VOID;
     }
 
     // Identifier '(' exprList? ')' #identifierFunctionCall
     @Override
-    public TLValue visitIdentifierFunctionCall(IdentifierFunctionCallContext ctx) {
+    public ItsyValue visitIdentifierFunctionCall(IdentifierFunctionCallContext ctx) {
         List<ExpressionContext> params = ctx.exprList() != null ? ctx.exprList().expression() : new ArrayList<ExpressionContext>();
-        String id = ctx.Identifier().getText() + params.size();
+        String id = ctx.IDENTIFIER().getText() + params.size();
         Function function;      
         if ((function = functions.get(id)) != null) {
             return function.invoke(params, functions, scope);
@@ -503,22 +504,22 @@ public class EvalVisitor extends TLBaseVisitor<TLValue> {
 
     // Println '(' expression? ')'  #printlnFunctionCall
     @Override
-    public TLValue visitPrintlnFunctionCall(@NotNull TLParser.PrintlnFunctionCallContext ctx) {
+    public ItsyValue visitPrintlnFunctionCall(@NotNull ItsyParser.PrintlnFunctionCallContext ctx) {
         System.out.println(this.visit(ctx.expression()));
-        return TLValue.VOID;
+        return ItsyValue.VOID;
     }
 
     // Print '(' expression ')'     #printFunctionCall
     @Override
-    public TLValue visitPrintFunctionCall(@NotNull TLParser.PrintFunctionCallContext ctx) {
+    public ItsyValue visitPrintFunctionCall(@NotNull ItsyParser.PrintFunctionCallContext ctx) {
         System.out.print(this.visit(ctx.expression()));
-        return TLValue.VOID;
+        return ItsyValue.VOID;
     }
 
     // Assert '(' expression ')'    #assertFunctionCall
     @Override
-    public TLValue visitAssertFunctionCall(AssertFunctionCallContext ctx) {
-    	TLValue value = this.visit(ctx.expression());
+    public ItsyValue visitAssertFunctionCall(AssertFunctionCallContext ctx) {
+    	ItsyValue value = this.visit(ctx.expression());
 
         if(!value.isBoolean()) {
             throw new EvalException(ctx);
@@ -528,20 +529,20 @@ public class EvalVisitor extends TLBaseVisitor<TLValue> {
             throw new AssertionError("Failed Assertion "+ctx.expression().getText()+" line:"+ctx.start.getLine());
         }
 
-        return TLValue.VOID;
+        return ItsyValue.VOID;
     }
 
     // Size '(' expression ')'      #sizeFunctionCall
     @Override
-    public TLValue visitSizeFunctionCall(SizeFunctionCallContext ctx) {
-    	TLValue value = this.visit(ctx.expression());
+    public ItsyValue visitSizeFunctionCall(SizeFunctionCallContext ctx) {
+    	ItsyValue value = this.visit(ctx.expression());
 
         if(value.isString()) {
-            return new TLValue(value.asString().length());
+            return new ItsyValue(value.asString().length());
         }
 
         if(value.isList()) {
-            return new TLValue(value.asList().size());
+            return new ItsyValue(value.asList().size());
         }
 
         throw new EvalException(ctx);
@@ -563,7 +564,7 @@ public class EvalVisitor extends TLBaseVisitor<TLValue> {
     //  : Else Do block
     //  ;
     @Override
-    public TLValue visitIfStatement(@NotNull TLParser.IfStatementContext ctx) {
+    public ItsyValue visitIfStatement(@NotNull ItsyParser.IfStatementContext ctx) {
 
         // if ...
         if(this.visit(ctx.ifStat().expression()).asBoolean()) {
@@ -582,14 +583,14 @@ public class EvalVisitor extends TLBaseVisitor<TLValue> {
             return this.visit(ctx.elseStat().block());
         }
 
-        return TLValue.VOID;
+        return ItsyValue.VOID;
     }
     
     // block
     // : (statement | functionDecl)* (Return expression)?
     // ;
     @Override
-    public TLValue visitBlock(BlockContext ctx) {
+    public ItsyValue visitBlock(BlockContext ctx) {
     		
     	scope = new Scope(scope); // create new local scope
         for (StatementContext sx: ctx.statement()) {
@@ -602,38 +603,38 @@ public class EvalVisitor extends TLBaseVisitor<TLValue> {
         	throw returnValue;
         }
         scope = scope.parent();
-        return TLValue.VOID;
+        return ItsyValue.VOID;
     }
     
     // forStatement
     // : For Identifier '=' expression To expression OBrace block CBrace
     // ;
     @Override
-    public TLValue visitForStatement(ForStatementContext ctx) {
+    public ItsyValue visitForStatement(ForStatementContext ctx) {
         int start = this.visit(ctx.expression(0)).asDouble().intValue();
         int stop = this.visit(ctx.expression(1)).asDouble().intValue();
         for(int i = start; i <= stop; i++) {
-            scope.assign(ctx.Identifier().getText(), new TLValue(i));
-            TLValue returnValue = this.visit(ctx.block());
-            if(returnValue != TLValue.VOID) {
+            scope.assign(ctx.IDENTIFIER().getText(), new ItsyValue(i));
+            ItsyValue returnValue = this.visit(ctx.block());
+            if(returnValue != ItsyValue.VOID) {
                 return returnValue;
             }
         }
-        return TLValue.VOID;
+        return ItsyValue.VOID;
     }
     
     // whileStatement
     // : While expression OBrace block CBrace
     // ;
     @Override
-    public TLValue visitWhileStatement(WhileStatementContext ctx) {
+    public ItsyValue visitWhileStatement(WhileStatementContext ctx) {
         while( this.visit(ctx.expression()).asBoolean() ) {
-            TLValue returnValue = this.visit(ctx.block());
-            if (returnValue != TLValue.VOID) {
+            ItsyValue returnValue = this.visit(ctx.block());
+            if (returnValue != ItsyValue.VOID) {
                 return returnValue;
             }
         }
-        return TLValue.VOID;
+        return ItsyValue.VOID;
     }
     
 }

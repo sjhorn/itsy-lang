@@ -1,0 +1,5 @@
+def loopy(name, loops)
+	for i = 1 to loops
+		println "Loop "+i+" Mr. "+name
+		
+loopy("Scott", 100)

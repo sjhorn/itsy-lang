@@ -2,19 +2,19 @@ package itsy.lang;
 
 import java.util.List;
 
-public class ItsyValue implements Comparable<TLValue> {
+public class ItsyValue implements Comparable<ItsyValue> {
 
-    public static final TLValue NULL = new TLValue();
-    public static final TLValue VOID = new TLValue();
+    public static final ItsyValue NULL = new ItsyValue();
+    public static final ItsyValue VOID = new ItsyValue();
 
     private Object value;
 
-    private TLValue() {
+    private ItsyValue() {
         // private constructor: only used for NULL and VOID
         value = new Object();
     }
 
-    public TLValue(Object v) {
+    public ItsyValue(Object v) {
         if(v == null) {
             throw new RuntimeException("v == null");
         }
@@ -38,8 +38,8 @@ public class ItsyValue implements Comparable<TLValue> {
     }
 
     @SuppressWarnings("unchecked")
-    public List<TLValue> asList() {
-        return (List<TLValue>)value;
+    public List<ItsyValue> asList() {
+        return (List<ItsyValue>)value;
     }
 
     public String asString() {
@@ -47,7 +47,7 @@ public class ItsyValue implements Comparable<TLValue> {
     }
 
     //@Override
-    public int compareTo(TLValue that) {
+    public int compareTo(ItsyValue that) {
         if(this.isNumber() && that.isNumber()) {
             if(this.equals(that)) {
                 return 0;
@@ -75,7 +75,7 @@ public class ItsyValue implements Comparable<TLValue> {
         if(o == null || this.getClass() != o.getClass()) {
             return false;
         }
-        TLValue that = (TLValue)o;
+        ItsyValue that = (ItsyValue)o;
         if(this.isNumber() && that.isNumber()) {
             double diff = Math.abs(this.asDouble() - that.asDouble());
             return diff < 0.00000000001;

@@ -6,7 +6,7 @@ import java.util.Map;
 public class Scope {
 
     private Scope parent;
-    private Map<String, TLValue> variables;
+    private Map<String, ItsyValue> variables;
 
     public Scope() {
         // only for the global scope, the parent is null
@@ -15,14 +15,14 @@ public class Scope {
 
     public Scope(Scope p) {
         parent = p;
-        variables = new HashMap<String, TLValue>();
+        variables = new HashMap<String, ItsyValue>();
     }
     
-    public void assignParam(String var, TLValue value) {
+    public void assignParam(String var, ItsyValue value) {
     	variables.put(var, value);
     }
     
-    public void assign(String var, TLValue value) {
+    public void assign(String var, ItsyValue value) {
         if(resolve(var) != null) {
             // There is already such a variable, re-assign it
             this.reAssign(var, value);
@@ -39,7 +39,7 @@ public class Scope {
         // changing the variables would result in changes ro the Maps from
         // other "recursive scopes".
         Scope s = new Scope();
-        s.variables = new HashMap<String, TLValue>(this.variables);
+        s.variables = new HashMap<String, ItsyValue>(this.variables);
         s.parent = this.parent;
         return s;
     }
@@ -52,7 +52,7 @@ public class Scope {
         return parent;
     }
 
-    private void reAssign(String identifier, TLValue value) {
+    private void reAssign(String identifier, ItsyValue value) {
         if(variables.containsKey(identifier)) {
             // The variable is declared in this scope
             variables.put(identifier, value);
@@ -64,8 +64,8 @@ public class Scope {
         }
     }
 
-    public TLValue resolve(String var) {
-        TLValue value = variables.get(var);
+    public ItsyValue resolve(String var) {
+        ItsyValue value = variables.get(var);
         if(value != null) {
             // The variable resides in this scope
             return value;
@@ -83,7 +83,7 @@ public class Scope {
     @Override
     public String toString() {
     	StringBuilder sb = new StringBuilder();
-    	for(Map.Entry<String,TLValue> var: variables.entrySet()) {
+    	for(Map.Entry<String,ItsyValue> var: variables.entrySet()) {
     		sb.append(var.getKey()+"->"+var.getValue()+",");
     	}
     	return sb.toString();
