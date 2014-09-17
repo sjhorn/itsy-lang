@@ -40,7 +40,7 @@ To run the tests
 All Assertions have passed.
 ``` 
 
-Our you can run the fun file
+Or you can run the fun file
 
 ```
 mvn -q exec:java -Dexec:args="src/main/itsy/fun.it"
