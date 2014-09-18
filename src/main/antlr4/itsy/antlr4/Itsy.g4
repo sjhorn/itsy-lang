@@ -163,6 +163,7 @@ expression
 
 list
  : '[' exprList? ']'
+ | '{' exprList? '}'
  ;
 
 indexes
