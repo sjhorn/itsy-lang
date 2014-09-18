@@ -1,6 +1,7 @@
 package itsy.lang;
 
 import java.util.List;
+import java.util.Map;
 
 public class ItsyValue implements Comparable<ItsyValue> {
 
@@ -41,46 +42,50 @@ public class ItsyValue implements Comparable<ItsyValue> {
     public List<ItsyValue> asList() {
         return (List<ItsyValue>)value;
     }
-
+    
     public String asString() {
         return (String)value;
     }
+    
+    public Map<Object, Object> asMap() {
+        return (Map<Object, Object>)value;
+    }
+    
+    public Object getValue() {
+        return value;
+    }
 
-    //@Override
+    @Override
     public int compareTo(ItsyValue that) {
         if(this.isNumber() && that.isNumber()) {
-            if(this.equals(that)) {
+            if (this.equals(that)) {
                 return 0;
-            }
-            else {
+            } else {
                 return this.asDouble().compareTo(that.asDouble());
             }
-        }
-        else if(this.isString() && that.isString()) {
+        } else if (this.isString() && that.isString()) {
             return this.asString().compareTo(that.asString());
-        }
-        else {
+        } else {
             throw new RuntimeException("illegal expression: can't compare `" + this + "` to `" + that + "`");
         }
     }
 
     @Override
     public boolean equals(Object o) {
-        if(this == VOID || o == VOID) {
+        if (this == VOID || o == VOID) {
             throw new RuntimeException("can't use VOID: " + this + " ==/!= " + o);
         }
-        if(this == o) {
+        if (this == o) {
             return true;
         }
-        if(o == null || this.getClass() != o.getClass()) {
+        if (o == null || this.getClass() != o.getClass()) {
             return false;
         }
         ItsyValue that = (ItsyValue)o;
-        if(this.isNumber() && that.isNumber()) {
+        if (this.isNumber() && that.isNumber()) {
             double diff = Math.abs(this.asDouble() - that.asDouble());
             return diff < 0.00000000001;
-        }
-        else {
+        } else {
             return this.value.equals(that.value);
         }
     }
@@ -100,6 +105,10 @@ public class ItsyValue implements Comparable<ItsyValue> {
 
     public boolean isList() {
         return value instanceof List<?>;
+    }
+    
+    public boolean isMap() {
+        return value instanceof Map<?,?>;
     }
 
     public boolean isNull() {

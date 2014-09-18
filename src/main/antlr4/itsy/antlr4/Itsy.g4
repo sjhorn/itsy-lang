@@ -123,6 +123,10 @@ whileStatement
  : WHILE expression NEWLINE INDENT block DEDENT
  ;
 
+exprMap
+ : expression ':' expression (',' expression ':' expression)*
+ ;
+ 
 idList
  : IDENTIFIER (',' IDENTIFIER)*
  ;
@@ -130,7 +134,7 @@ idList
 exprList
  : expression (',' expression)*
  ;
-
+ 
 expression
  : '-' expression                           #unaryMinusExpression
  | '!' expression                           #notExpression
@@ -164,6 +168,11 @@ expression
 list
  : '[' exprList? ']'
  | '{' exprList? '}'
+ ;
+
+map
+ : '{' exprMap? '}'
+ | '[' exprMap? ']'
  ;
 
 indexes

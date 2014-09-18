@@ -109,7 +109,10 @@ numbers = [3,5,1,4,2]
 sort(numbers)
 assert numbers == [1,2,3,4,5]
 
-// resursive calls
+// maps
+assert ["a":"hello"]["a"] == "hello"
+
+// recursive calls
 def fib(n)
   if n < 2
     return n

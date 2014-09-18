@@ -20,6 +20,7 @@ import itsy.antlr4.ItsyParser.ListContext;
 import itsy.antlr4.ItsyParser.ListExpressionContext;
 import itsy.antlr4.ItsyParser.LtEqExpressionContext;
 import itsy.antlr4.ItsyParser.LtExpressionContext;
+import itsy.antlr4.ItsyParser.MapContext;
 import itsy.antlr4.ItsyParser.ModulusExpressionContext;
 import itsy.antlr4.ItsyParser.MultiplyExpressionContext;
 import itsy.antlr4.ItsyParser.NotExpressionContext;
@@ -38,6 +39,7 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -66,13 +68,26 @@ public class EvalVisitor extends ItsyBaseVisitor<ItsyValue> {
     public ItsyValue visitList(ListContext ctx) {
         List<ItsyValue> list = new ArrayList<ItsyValue>();
         if (ctx.exprList() != null) {
-	        for(ExpressionContext ex: ctx.exprList().expression()) {
+	        for (ExpressionContext ex: ctx.exprList().expression()) {
 	            list.add(this.visit(ex));
 	        }
         }
         return new ItsyValue(list);
     }
     
+    // map: '{' exprMap? '}' | '[' exprMap? ']'
+    // exprMap: expression ':' expression (',' expression ':' expression )*
+    @Override
+    public ItsyValue visitMap(MapContext ctx) {
+        Map<Object, Object> map = new LinkedHashMap<Object, Object>();
+        if (ctx.exprMap() != null) {
+            List<ExpressionContext> expressions = ctx.exprMap().expression();
+            for (int i = 0; i < expressions.size(); i += 2) {
+                map.put(this.visit(expressions.get(i)), this.visit(expressions.get(i+1)));
+            }
+        }
+        return new ItsyValue(map);
+    }
     
     // '-' expression                           #unaryMinusExpression
     @Override
@@ -363,14 +378,20 @@ public class EvalVisitor extends ItsyBaseVisitor<ItsyValue> {
     private ItsyValue resolveIndexes(ParserRuleContext ctx, ItsyValue val, List<ExpressionContext> indexes) {
     	for (ExpressionContext ec: indexes) {
     		ItsyValue idx = this.visit(ec);
-    		if (!idx.isNumber() || (!val.isList() && !val.isString()) ) {
+    		if (!idx.isNumber() || (!val.isList() && !val.isString()) && !val.isMap()) {
         		throw new EvalException("Problem resolving indexes on "+val+" at "+idx, ec);
     		}
-    		int i = idx.asDouble().intValue();
-    		if (val.isString()) {
-    			val = new ItsyValue(val.asString().substring(i, i+1));
+    		if (idx.isNumber()) {
+        		int i = idx.asDouble().intValue();
+        		if (val.isString()) {
+        			val = new ItsyValue(val.asString().substring(i, i+1));
+        		} else {
+        			val = val.asList().get(i);
+        		}
+    		} else if (val.isMap()) {
+    		    val = new ItsyValue(val.asMap().get(idx.getValue()));
     		} else {
-    			val = val.asList().get(i);
+    		    throw new EvalException("Problem resolving indexes on "+val+" at "+idx, ec);
     		}
     	}
     	return val;
