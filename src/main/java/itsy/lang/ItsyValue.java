@@ -17,7 +17,7 @@ public class ItsyValue implements Comparable<ItsyValue> {
 
     public ItsyValue(Object v) {
         if(v == null) {
-            throw new RuntimeException("v == null");
+            throw new RuntimeException("Invalid ItsyValue - null");
         }
         value = v;
         // only accept boolean, list, number or string types
@@ -47,8 +47,8 @@ public class ItsyValue implements Comparable<ItsyValue> {
         return (String)value;
     }
     
-    public Map<Object, Object> asMap() {
-        return (Map<Object, Object>)value;
+    public Map<ItsyValue, ItsyValue> asMap() {
+        return (Map<ItsyValue, ItsyValue>)value;
     }
     
     public Object getValue() {

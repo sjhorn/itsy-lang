@@ -72,7 +72,7 @@ parse
  ;
 
 block
- : (NEWLINE | statement | functionDecl)* (RETURN expression NEWLINE)?
+ : (NEWLINE | statement NEWLINE | functionDecl NEWLINE)* (RETURN expression NEWLINE)?
  ;
 
 statement
@@ -80,6 +80,7 @@ statement
  | functionCall
  | ifStatement
  | forStatement
+ | forInStatement
  | whileStatement
  ;
 
@@ -119,6 +120,10 @@ forStatement
  : FOR IDENTIFIER '=' expression TO expression NEWLINE INDENT block DEDENT
  ;
 
+forInStatement
+ : FOR IDENTIFIER IN expression NEWLINE INDENT block DEDENT
+ ;
+ 
 whileStatement
  : WHILE expression NEWLINE INDENT block DEDENT
  ;
@@ -164,6 +169,7 @@ expression
  | STRING indexes?                          #stringExpression
  | '(' expression ')' indexes?              #expressionExpression
  | INPUT '(' STRING? ')'                    #inputExpression
+ | FILE '(' STRING ')'                      #fileExpression
  ;
 
 list
@@ -183,6 +189,7 @@ indexes
 PRINTLN  : 'println';
 PRINT    : 'print';
 INPUT    : 'input';
+FILE     : 'file';
 ASSERT   : 'assert';
 SIZE     : 'size';
 DEF      : 'def';

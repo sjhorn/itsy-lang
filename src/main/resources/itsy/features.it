@@ -1,0 +1,37 @@
+def sayHello(name)
+	println "Hello "+name
+	
+def factorial(n)
+	if n < 2
+		return 1
+	return n * factorial(n-1)
+	
+sayHello("Scott")
+
+println "10 Factorial is "+factorial(10)
+
+assert "test" in ["one","two","test","three"]	
+
+a = 1
+b = 10
+if a < b
+	println "a "+a+" is less than "+b
+else
+	println  "a "+a+" is greater than or equal to "+b	
+for i = 1 to 10
+	println i+". Say it again"
+	
+for i in [1,3,5,7,9]
+	println "How odd "+i
+	
+facts = ["name":"Scott", "likes to": "cycle", "lives in": "Brisbane"]
+for key in facts 
+	println key + " -> " + facts[key] 
+	
+b = input("Do you like programming (y/n)?")
+if b == "y"
+	println "Cool, me too"
+else 
+	println "That's because you haven't tried Itsy"
+	
+println file("pom.xml")

@@ -8,6 +8,8 @@ import itsy.antlr4.ItsyParser.BlockContext;
 import itsy.antlr4.ItsyParser.DivideExpressionContext;
 import itsy.antlr4.ItsyParser.ExpressionContext;
 import itsy.antlr4.ItsyParser.ExpressionExpressionContext;
+import itsy.antlr4.ItsyParser.FileExpressionContext;
+import itsy.antlr4.ItsyParser.ForInStatementContext;
 import itsy.antlr4.ItsyParser.ForStatementContext;
 import itsy.antlr4.ItsyParser.FunctionCallExpressionContext;
 import itsy.antlr4.ItsyParser.FunctionDeclContext;
@@ -80,7 +82,7 @@ public class EvalVisitor extends ItsyBaseVisitor<ItsyValue> {
     // exprMap: expression ':' expression (',' expression ':' expression )*
     @Override
     public ItsyValue visitMap(MapContext ctx) {
-        Map<Object, Object> map = new LinkedHashMap<Object, Object>();
+        Map<ItsyValue, ItsyValue> map = new LinkedHashMap<ItsyValue, ItsyValue>();
         if (ctx.exprMap() != null) {
             List<ExpressionContext> expressions = ctx.exprMap().expression();
             for (int i = 0; i < expressions.size(); i += 2) {
@@ -127,7 +129,6 @@ public class EvalVisitor extends ItsyBaseVisitor<ItsyValue> {
     	ItsyValue lhs = this.visit(ctx.expression(0));
     	ItsyValue rhs = this.visit(ctx.expression(1));
     	if(lhs == null || rhs == null) {
-    		System.err.println("lhs "+ lhs+ " rhs "+rhs);
     	    throw new EvalException(ctx);
     	}
     	
@@ -379,7 +380,7 @@ public class EvalVisitor extends ItsyBaseVisitor<ItsyValue> {
     private ItsyValue resolveIndexes(ParserRuleContext ctx, ItsyValue val, List<ExpressionContext> indexes) {
     	for (ExpressionContext ec: indexes) {
     		ItsyValue idx = this.visit(ec);
-    		if (!idx.isNumber() || (!val.isList() && !val.isString()) && !val.isMap()) {
+    		if (!val.isList() && !val.isString() && !val.isMap()) {
         		throw new EvalException("Problem resolving indexes on "+val+" at "+idx, ec);
     		}
     		if (idx.isNumber()) {
@@ -390,7 +391,7 @@ public class EvalVisitor extends ItsyBaseVisitor<ItsyValue> {
         			val = val.asList().get(i);
         		}
     		} else if (val.isMap()) {
-    		    val = new ItsyValue(val.asMap().get(idx.getValue()));
+    		    val = (ItsyValue) val.asMap().get(idx);
     		} else {
     		    throw new EvalException("Problem resolving indexes on "+val+" at "+idx, ec);
     		}
@@ -486,20 +487,33 @@ public class EvalVisitor extends ItsyBaseVisitor<ItsyValue> {
         }
         return val;
     }
-
-    // Input '(' String? ')'                    #inputExpression
+    
+    // FILE '(' String ')' 						#fileExpression
+    @Override
+    public ItsyValue visitFileExpression(FileExpressionContext ctx) {
+    	String filePath = getString(ctx.STRING());
+    	try {
+			return new ItsyValue(new String(Files.readAllBytes(Paths.get(filePath))));
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+    }
+    
+    private String getString(TerminalNode inputString) {
+    	 String text = inputString.getText();
+	     return text.substring(1, text.length() - 1).replaceAll("\\\\(.)", "$1");
+    }
+    
+    // INPUT '(' String? ')'                    #inputExpression
     @Override
     public ItsyValue visitInputExpression(InputExpressionContext ctx) {
     	TerminalNode inputString = ctx.STRING();
 		try {
 			if (inputString != null) {
-				String text = inputString.getText();
-		        text = text.substring(1, text.length() - 1).replaceAll("\\\\(.)", "$1");
-				return new ItsyValue(new String(Files.readAllBytes(Paths.get(text))));
-			} else {
-				BufferedReader buffer = new BufferedReader(new InputStreamReader(System.in));
-				return new ItsyValue(buffer.readLine());
-			}
+				System.out.print(getString(inputString));
+			} 
+			BufferedReader buffer = new BufferedReader(new InputStreamReader(System.in));
+			return new ItsyValue(buffer.readLine());
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -640,14 +654,15 @@ public class EvalVisitor extends ItsyBaseVisitor<ItsyValue> {
     }
     
     // forStatement
-    // : For Identifier '=' expression To expression OBrace block CBrace
+    // : For Identifier '=' expression To expression NEWLINE INDENT block DEDENT
     // ;
     @Override
     public ItsyValue visitForStatement(ForStatementContext ctx) {
         int start = this.visit(ctx.expression(0)).asDouble().intValue();
         int stop = this.visit(ctx.expression(1)).asDouble().intValue();
+        String varName = ctx.IDENTIFIER().getText();
         for(int i = start; i <= stop; i++) {
-            scope.assign(ctx.IDENTIFIER().getText(), new ItsyValue(i));
+            scope.assign(varName, new ItsyValue(i));
             ItsyValue returnValue = this.visit(ctx.block());
             if(returnValue != ItsyValue.VOID) {
                 return returnValue;
@@ -656,8 +671,33 @@ public class EvalVisitor extends ItsyBaseVisitor<ItsyValue> {
         return ItsyValue.VOID;
     }
     
+    // forInStatement
+    // : For Identifier IN expression NEWLINE INDENT block DEDENT
+    // ;
+    @Override
+    public ItsyValue visitForInStatement(ForInStatementContext ctx) {
+    	ItsyValue expression = this.visit(ctx.expression());
+    	Iterable<ItsyValue> iterable;
+    	if (expression.isList()) {
+    		iterable = expression.asList();
+    	} else if (expression.isMap()) {
+    		iterable = expression.asMap().keySet();
+    	} else {
+    		throw new EvalException("Please use a dict/map or list in a for in for ", ctx);
+    	}
+    	String varName = ctx.IDENTIFIER().getText();
+    	for (ItsyValue val: iterable) {
+			scope.assign(varName, val);
+            ItsyValue returnValue = this.visit(ctx.block());
+            if(returnValue != ItsyValue.VOID) {
+                return returnValue;
+            }
+		}
+    	return ItsyValue.VOID;
+    }
+    
     // whileStatement
-    // : While expression OBrace block CBrace
+    // : While expression NEWLINE INDENT block DEDENT
     // ;
     @Override
     public ItsyValue visitWhileStatement(WhileStatementContext ctx) {

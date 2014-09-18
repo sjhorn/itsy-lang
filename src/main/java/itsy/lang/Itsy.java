@@ -25,18 +25,21 @@ public class Itsy {
             ItsyParser parser = new ItsyParser(new CommonTokenStream(lexer));
             parser.setBuildParseTree(true);
             ParseTree tree = parser.parse();
+            if (parser.getNumberOfSyntaxErrors() != 0) {
+            	return;
+            }
             
             Map<String, Function> functions = new HashMap<String, Function>();
             SymbolVisitor symbolVisitor = new SymbolVisitor(functions);
             symbolVisitor.visit(tree);
             EvalVisitor visitor = new EvalVisitor(globalScope, functions);
             visitor.visit(tree);
+        } catch (AssertionError ae) {
+        	System.err.println(ae.getMessage());
+        } catch (EvalException ee) {
+        	System.err.println(ee.getMessage());
         } catch (Exception e) {
-            if ( e.getMessage() != null) {
-                System.err.println(e.getMessage());
-            } else {
-                e.printStackTrace();
-            }
+            e.printStackTrace();
         }
 	}
 	
