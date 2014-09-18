@@ -123,16 +123,16 @@ whileStatement
  : WHILE expression NEWLINE INDENT block DEDENT
  ;
 
-exprMap
- : expression ':' expression (',' expression ':' expression)*
- ;
- 
 idList
  : IDENTIFIER (',' IDENTIFIER)*
  ;
 
 exprList
  : expression (',' expression)*
+ ;
+ 
+exprMap
+ : expression ':' expression (',' expression ':' expression)*
  ;
  
 expression
@@ -159,6 +159,7 @@ expression
  | NULL                                     #nullExpression
  | functionCall indexes?                    #functionCallExpression
  | list indexes?                            #listExpression
+ | map indexes?                             #mapExpression
  | IDENTIFIER indexes?                      #identifierExpression
  | STRING indexes?                          #stringExpression
  | '(' expression ')' indexes?              #expressionExpression

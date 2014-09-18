@@ -110,7 +110,8 @@ sort(numbers)
 assert numbers == [1,2,3,4,5]
 
 // maps
-assert ["a":"hello"]["a"] == "hello"
+a = {"test":"test"}
+assert a["test"] == "test"
 
 // recursive calls
 def fib(n)

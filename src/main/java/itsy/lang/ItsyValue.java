@@ -21,7 +21,7 @@ public class ItsyValue implements Comparable<ItsyValue> {
         }
         value = v;
         // only accept boolean, list, number or string types
-        if(!(isBoolean() || isList() || isNumber() || isString())) {
+        if(!(isBoolean() || isList() || isNumber() || isString() || isMap())) {
             throw new RuntimeException("invalid data type: " + v + " (" + v.getClass() + ")");
         }
     }

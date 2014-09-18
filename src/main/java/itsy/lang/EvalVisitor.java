@@ -21,6 +21,7 @@ import itsy.antlr4.ItsyParser.ListExpressionContext;
 import itsy.antlr4.ItsyParser.LtEqExpressionContext;
 import itsy.antlr4.ItsyParser.LtExpressionContext;
 import itsy.antlr4.ItsyParser.MapContext;
+import itsy.antlr4.ItsyParser.MapExpressionContext;
 import itsy.antlr4.ItsyParser.ModulusExpressionContext;
 import itsy.antlr4.ItsyParser.MultiplyExpressionContext;
 import itsy.antlr4.ItsyParser.NotExpressionContext;
@@ -437,7 +438,18 @@ public class EvalVisitor extends ItsyBaseVisitor<ItsyValue> {
         }
     	return val;
     }
-
+    
+    // map indexes?                             #mapExpression
+    @Override
+    public ItsyValue visitMapExpression(MapExpressionContext ctx) {
+        ItsyValue val = this.visit(ctx.map());
+        if (ctx.indexes() != null) {
+            List<ExpressionContext> exps = ctx.indexes().expression();
+            val = resolveIndexes(ctx, val, exps);
+        }
+        return val;
+    }
+    
     // Identifier indexes?                      #identifierExpression
     @Override
     public ItsyValue visitIdentifierExpression(@NotNull ItsyParser.IdentifierExpressionContext ctx) {
