@@ -72,7 +72,7 @@ parse
  ;
 
 block
- : (NEWLINE | statement NEWLINE | functionDecl NEWLINE)* (RETURN expression NEWLINE)?
+ : (NEWLINE | statement | functionDecl)* (RETURN expression NEWLINE)?
  ;
 
 statement
