@@ -6,8 +6,36 @@
 
 The initial concepts and implementation are inspired by [Bart Kiers](https://github.com/bkiers) and his [blogs posts on the Tiny Language](http://bkiers.blogspot.nl/2011/03/creating-your-own-programming-language.html). It also borrows the INDENT/DEDENT tokenising technique from [Bart's work in the Python3 Grammer](https://github.com/antlr/grammars-v4/blob/master/python3/Python3.g4)
 
+## Quickstart
 
-## Running
+You will need java 7 or later from here:
+
+[Download Java here](http://java.com)
+
+Then download the itsy for your os (this is a 430k file)
+
+### On OSX
+```
+cd /usr/local/lib
+sudo curl -O http://hornmicro.com/scott/itsy/itsy-1.0-SNAPSHOT.jar
+alias itsy='java -jar /usr/local/lib/itsy-1.0-SNAPSHOT.jar'
+```
+
+### On Linux
+```
+cd /usr/local/lib
+wget http://hornmicro.com/scott/itsy/itsy-1.0-SNAPSHOT.jar
+alias itsy='java -jar /usr/local/lib/itsy-1.0-SNAPSHOT.jar'
+```
+
+Then just run your itsy file:
+
+```
+itsy filename.it
+```
+
+
+## Building with Maven
 
 First, clone this repository:
 
@@ -19,19 +47,12 @@ cd itsy-lang
 Then generate the lexer, parser and visitor classes using the antlr4 Maven plugin:
 
 ```
-mvn antlr4:antlr4
-```
-
-Compile all classes:
-
-```
-mvn install
+mvn package
 ```
 
 To run the tests
-
 ```
- mvn -q exec:java
+java -jar target/itsy-1.0-SNAPSHOT.jar
 ```
  
  This will print the following
@@ -43,7 +64,7 @@ All Assertions have passed.
 Or you can run the fun file
 
 ```
-mvn -q exec:java -Dexec:args="src/main/itsy/fun.it"
+java -jar target/itsy-1.0-SNAPSHOT.jar src/main/resources/itsy/fun.it
 ```
 
 and this will print
@@ -59,6 +80,9 @@ Loop 98 Mr. Scott
 Loop 99 Mr. Scott
 Loop 100 Mr. Scott
 ```
+
+
+
 
 
 ## No Maven?
