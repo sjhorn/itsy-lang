@@ -1,6 +1,6 @@
 #Itsy Language
 
-**Itsy** is a [python](http://www.python.org) inspired procedural language that I have written to learn and experiment with [Antlr](http://www.antlr.org) and implementing an interpreter. 
+Itsy is a [python](http://www.python.org) inspired procedural language that I have written to learn and experiment with [Antlr](http://www.antlr.org) and implementing an interpreter. 
 
 ## Credits
 
@@ -16,16 +16,18 @@ Then download the itsy for your os (this is a 430k file)
 
 ### On OSX
 ```
-cd /usr/local/lib
-sudo curl -O http://hornmicro.com/scott/itsy/itsy-1.0-SNAPSHOT.jar
-alias itsy='java -jar /usr/local/lib/itsy-1.0-SNAPSHOT.jar'
+mkdir ~/lib
+cd ~/lib
+curl -O http://hornmicro.com/scott/itsy/itsy-1.0-SNAPSHOT.jar
+alias itsy='java -jar ~/lib/itsy-1.0-SNAPSHOT.jar'
 ```
 
 ### On Linux
 ```
-cd /usr/local/lib
+mkdir ~/lib
+cd ~/lib
 wget http://hornmicro.com/scott/itsy/itsy-1.0-SNAPSHOT.jar
-alias itsy='java -jar /usr/local/lib/itsy-1.0-SNAPSHOT.jar'
+alias itsy='java -jar ~/lib/itsy-1.0-SNAPSHOT.jar'
 ```
 
 Then just run your itsy file:
