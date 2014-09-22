@@ -68,7 +68,11 @@ tokens { INDENT, DEDENT }
 }
 
 parse
- : block EOF
+ : importDeclaration* | block EOF
+ ;
+ 
+importDeclaration
+ : 'import' STRING NEWLINE
  ;
 
 block

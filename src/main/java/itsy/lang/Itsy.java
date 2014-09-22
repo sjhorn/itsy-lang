@@ -17,8 +17,13 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 public class Itsy {
-	Scope globalScope = new Scope();
+	Scope globalScope;
+	String sourcePath;
 	
+	public Itsy(Scope globalScope, String sourcePath) {
+	    this.globalScope = globalScope;
+	    this.sourcePath = sourcePath;
+	}
 	public void run(CharStream source) {
 		try {
             ItsyLexer lexer = new ItsyLexer(source);
@@ -35,10 +40,11 @@ public class Itsy {
             EvalVisitor visitor = new EvalVisitor(globalScope, functions);
             visitor.visit(tree);
         } catch (AssertionError ae) {
-        	System.err.println(ae.getMessage());
+        	System.err.println(sourcePath+": "+ae.getMessage());
         } catch (EvalException ee) {
-        	System.err.println(ee.getMessage());
+        	System.err.println(sourcePath+": "+ee.getMessage());
         } catch (Exception e) {
+            System.err.println("Unhandled exception in "+sourcePath+":");
             e.printStackTrace();
         }
 	}
@@ -58,8 +64,16 @@ public class Itsy {
         return new ANTLRInputStream(new String(java.nio.file.Files.readAllBytes(resPath), "UTF8"));
 	}
 	
-    public static void main(String[] args) throws Exception{
-        CharStream main = args.length == 0 ? resourceToString("/itsy/test.it") : new ANTLRFileStream(args[0]);
-        new Itsy().run(main);
+    public static void main(String[] args) throws Exception {
+        CharStream main;
+        String sourcePath;
+        if (args.length == 0) {
+            sourcePath = "/itsy/test.it";
+            main = resourceToString(sourcePath);
+        } else {
+            sourcePath = args[0];
+            main = new ANTLRFileStream(args[0]);
+        }
+        new Itsy(new Scope(), sourcePath).run(main);
     }
 }

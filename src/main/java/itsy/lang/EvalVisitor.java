@@ -16,6 +16,7 @@ import itsy.antlr4.ItsyParser.FunctionDeclContext;
 import itsy.antlr4.ItsyParser.GtEqExpressionContext;
 import itsy.antlr4.ItsyParser.GtExpressionContext;
 import itsy.antlr4.ItsyParser.IdentifierFunctionCallContext;
+import itsy.antlr4.ItsyParser.ImportDeclarationContext;
 import itsy.antlr4.ItsyParser.InExpressionContext;
 import itsy.antlr4.ItsyParser.InputExpressionContext;
 import itsy.antlr4.ItsyParser.ListContext;
@@ -37,6 +38,7 @@ import itsy.antlr4.ItsyParser.UnaryMinusExpressionContext;
 import itsy.antlr4.ItsyParser.WhileStatementContext;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
@@ -46,6 +48,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.antlr.v4.runtime.ANTLRFileStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -54,12 +57,27 @@ public class EvalVisitor extends ItsyBaseVisitor<ItsyValue> {
 	private static ReturnValue returnValue = new ReturnValue();
     private Scope scope;
     private Map<String, Function> functions;
+    private File parentPath;
     
-    public EvalVisitor(Scope scope, Map<String, Function> functions) {
+    public EvalVisitor(Scope scope, Map<String, Function> functions, File parentPath) {
         this.scope = scope;
         this.functions = functions;
+        this.parentPath = parentPath;
     }
-
+    // TODO complete this
+    /*
+    @Override
+    public ItsyValue visitImportDeclaration(ImportDeclarationContext ctx) {
+        String filePath = ctx.STRING().getText();
+        try {
+            new Itsy(scope, filePath).run(new ANTLRFileStream(filePath));
+        } catch (IOException e) {
+            throw new EvalException(e.getMessage(), ctx);
+        }
+        return ItsyValue.VOID; 
+    }
+    */
+    
     // functionDecl
     @Override
     public ItsyValue visitFunctionDecl(FunctionDeclContext ctx) {
