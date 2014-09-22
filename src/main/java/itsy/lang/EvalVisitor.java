@@ -57,26 +57,26 @@ public class EvalVisitor extends ItsyBaseVisitor<ItsyValue> {
 	private static ReturnValue returnValue = new ReturnValue();
     private Scope scope;
     private Map<String, Function> functions;
-    private File parentPath;
+    private File workingDirectory;
     
-    public EvalVisitor(Scope scope, Map<String, Function> functions, File parentPath) {
+    public EvalVisitor(Scope scope, Map<String, Function> functions, File workingDirectory) {
         this.scope = scope;
         this.functions = functions;
-        this.parentPath = parentPath;
+        this.workingDirectory = workingDirectory;
     }
-    // TODO complete this
-    /*
+  
+    // importDeclaration
     @Override
     public ItsyValue visitImportDeclaration(ImportDeclarationContext ctx) {
-        String filePath = ctx.STRING().getText();
+        String filePath = getString(ctx.STRING());
         try {
-            new Itsy(scope, filePath).run(new ANTLRFileStream(filePath));
+        	File sourcePath = new File(workingDirectory, filePath);
+            new Itsy(scope, sourcePath.getParent()).run(new ANTLRFileStream(sourcePath.getPath()));
         } catch (IOException e) {
             throw new EvalException(e.getMessage(), ctx);
         }
         return ItsyValue.VOID; 
     }
-    */
     
     // functionDecl
     @Override
@@ -562,7 +562,7 @@ public class EvalVisitor extends ItsyBaseVisitor<ItsyValue> {
         String id = ctx.IDENTIFIER().getText() + params.size();
         Function function;      
         if ((function = functions.get(id)) != null) {
-            return function.invoke(params, functions, scope);
+            return function.invoke(params, functions, scope, workingDirectory);
         }
         throw new EvalException(ctx);
     }
@@ -652,12 +652,17 @@ public class EvalVisitor extends ItsyBaseVisitor<ItsyValue> {
     }
     
     // block
-    // : (statement | functionDecl)* (Return expression)?
+    // : (importDeclaration | NEWLINE | statement | functionDecl)* (Return expression)?
     // ;
     @Override
     public ItsyValue visitBlock(BlockContext ctx) {
-    		
     	scope = new Scope(scope); // create new local scope
+    	List<ImportDeclarationContext> imports;
+    	if ( (imports = ctx.importDeclaration()) != null) {
+    		for(ImportDeclarationContext idc: imports) {
+    			this.visit(idc);
+    		}
+    	}
         for (StatementContext sx: ctx.statement()) {
             this.visit(sx);
         }

@@ -2,6 +2,7 @@ package itsy.lang;
 
 import itsy.antlr4.ItsyParser.ExpressionContext;
 
+import java.io.File;
 import java.util.List;
 import java.util.Map;
 
@@ -19,12 +20,12 @@ public class Function {
         this.block = block;
     }
     
-    public ItsyValue invoke(List<ExpressionContext> params, Map<String, Function> functions, Scope scope) {
+    public ItsyValue invoke(List<ExpressionContext> params, Map<String, Function> functions, Scope scope, File workingDirectory) {
         if (params.size() != this.params.size()) {
             throw new RuntimeException("Illegal Function call");
         }
         scope = new Scope(scope); // create function scope
-        EvalVisitor evalVisitor = new EvalVisitor(scope, functions); 
+        EvalVisitor evalVisitor = new EvalVisitor(scope, functions, workingDirectory); 
         for (int i = 0; i < this.params.size(); i++) {
             ItsyValue value = evalVisitor.visit(params.get(i));
             scope.assignParam(this.params.get(i).getText(), value);

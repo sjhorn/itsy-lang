@@ -3,6 +3,7 @@ package itsy.lang;
 import itsy.antlr4.ItsyLexer;
 import itsy.antlr4.ItsyParser;
 
+import java.io.File;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -19,10 +20,13 @@ import org.antlr.v4.runtime.tree.ParseTree;
 public class Itsy {
 	Scope globalScope;
 	String sourcePath;
+	File workingDirectory;
 	
 	public Itsy(Scope globalScope, String sourcePath) {
 	    this.globalScope = globalScope;
 	    this.sourcePath = sourcePath;
+	    workingDirectory = new File(sourcePath);
+	    workingDirectory = workingDirectory.isFile() ? workingDirectory.getParentFile() : new File(".");
 	}
 	public void run(CharStream source) {
 		try {
@@ -33,11 +37,12 @@ public class Itsy {
             if (parser.getNumberOfSyntaxErrors() != 0) {
             	return;
             }
+            //System.out.println(tree.toStringTree(parser));
             
             Map<String, Function> functions = new HashMap<String, Function>();
             SymbolVisitor symbolVisitor = new SymbolVisitor(functions);
             symbolVisitor.visit(tree);
-            EvalVisitor visitor = new EvalVisitor(globalScope, functions);
+            EvalVisitor visitor = new EvalVisitor(globalScope, functions, workingDirectory);
             visitor.visit(tree);
         } catch (AssertionError ae) {
         	System.err.println(sourcePath+": "+ae.getMessage());
@@ -65,15 +70,15 @@ public class Itsy {
 	}
 	
     public static void main(String[] args) throws Exception {
-        CharStream main;
+        CharStream sourceCode;
         String sourcePath;
         if (args.length == 0) {
             sourcePath = "/itsy/test.it";
-            main = resourceToString(sourcePath);
+            sourceCode = resourceToString(sourcePath);
         } else {
             sourcePath = args[0];
-            main = new ANTLRFileStream(args[0]);
+            sourceCode = new ANTLRFileStream(args[0]);
         }
-        new Itsy(new Scope(), sourcePath).run(main);
+        new Itsy(new Scope(), sourcePath).run(sourceCode);
     }
 }

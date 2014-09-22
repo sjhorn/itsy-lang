@@ -68,17 +68,17 @@ tokens { INDENT, DEDENT }
 }
 
 parse
- : importDeclaration* | block EOF
+ : block EOF
  ;
  
+block
+ : (importDeclaration | NEWLINE | statement | functionDecl)* (RETURN expression NEWLINE)?
+ ;
+
 importDeclaration
  : 'import' STRING NEWLINE
  ;
-
-block
- : (NEWLINE | statement | functionDecl)* (RETURN expression NEWLINE)?
- ;
-
+ 
 statement
  : assignment
  | functionCall
