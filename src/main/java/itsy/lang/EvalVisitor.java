@@ -8,6 +8,7 @@ import itsy.antlr4.ItsyParser.BlockContext;
 import itsy.antlr4.ItsyParser.DivideExpressionContext;
 import itsy.antlr4.ItsyParser.ExpressionContext;
 import itsy.antlr4.ItsyParser.ExpressionExpressionContext;
+import itsy.antlr4.ItsyParser.FileAssignmentContext;
 import itsy.antlr4.ItsyParser.FileExpressionContext;
 import itsy.antlr4.ItsyParser.ForInStatementContext;
 import itsy.antlr4.ItsyParser.ForStatementContext;
@@ -41,8 +42,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.CharsetDecoder;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -485,9 +487,7 @@ public class EvalVisitor extends ItsyBaseVisitor<ItsyValue> {
     // String indexes?                          #stringExpression
     @Override
     public ItsyValue visitStringExpression(@NotNull ItsyParser.StringExpressionContext ctx) {
-        String text = ctx.getText();
-        text = text.substring(1, text.length() - 1).replaceAll("\\\\(.)", "$1");
-        ItsyValue val = new ItsyValue(text);
+        ItsyValue val = new ItsyValue(getString(ctx.STRING()));
         if (ctx.indexes() != null) {
         	List<ExpressionContext> exps = ctx.indexes().expression();
         	val = resolveIndexes(ctx, val, exps);
@@ -506,12 +506,18 @@ public class EvalVisitor extends ItsyBaseVisitor<ItsyValue> {
         return val;
     }
     
+    private Path getFilePath(String filePath) {
+    	File file = new File(filePath);
+    	return file.isAbsolute() ? file.toPath() : 
+    		new File(workingDirectory, filePath).toPath();
+    }
+    
     // FILE '(' String ')' 						#fileExpression
     @Override
     public ItsyValue visitFileExpression(FileExpressionContext ctx) {
-    	String filePath = getString(ctx.STRING());
+    	Path filePath = getFilePath(getString(ctx.STRING()));
     	try {
-			return new ItsyValue(new String(Files.readAllBytes(Paths.get(filePath))));
+			return new ItsyValue(new String(Files.readAllBytes(filePath)));
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -519,7 +525,8 @@ public class EvalVisitor extends ItsyBaseVisitor<ItsyValue> {
     
     private String getString(TerminalNode inputString) {
     	 String text = inputString.getText();
-	     return text.substring(1, text.length() - 1).replaceAll("\\\\(.)", "$1");
+	     text = text.substring(1, text.length() - 1);
+	     return StringUtil.unescapeJavaString(text);
     }
     
     // INPUT '(' String? ')'                    #inputExpression
@@ -533,10 +540,22 @@ public class EvalVisitor extends ItsyBaseVisitor<ItsyValue> {
 			BufferedReader buffer = new BufferedReader(new InputStreamReader(System.in));
 			return new ItsyValue(buffer.readLine());
 		} catch (IOException e) {
-			throw new RuntimeException(e);
+			throw new EvalException(e.getMessage(), ctx);
 		}
     }
-
+    
+    // FILE '(' STRING ')' '=' expression
+    @Override
+    public ItsyValue visitFileAssignment(FileAssignmentContext ctx) {
+    	Path filePath = getFilePath(getString(ctx.STRING()));
+    	ItsyValue expression = this.visit(ctx.expression());
+    	try {
+    		Files.write(filePath, expression.toString().getBytes());
+		} catch (IOException e) {
+			throw new EvalException(e.getMessage(), ctx);
+		}
+    	return ItsyValue.VOID;
+    }
     
     // assignment
     // : Identifier indexes? '=' expression

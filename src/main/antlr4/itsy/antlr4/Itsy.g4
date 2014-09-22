@@ -81,6 +81,7 @@ importDeclaration
  
 statement
  : assignment
+ | fileAssignment
  | functionCall
  | ifStatement
  | forStatement
@@ -90,6 +91,10 @@ statement
 
 assignment
  : IDENTIFIER indexes? '=' expression
+ ;
+ 
+fileAssignment
+ : FILE '(' STRING ')' '=' expression
  ;
 
 functionCall
