@@ -100,9 +100,10 @@ fileAssignment
 functionCall
  : IDENTIFIER '(' exprList? ')'	 				 #identifierFunctionCall
  | PRINTLN ( '(' expression? ')' | expression? ) #printlnFunctionCall
- | PRINT ( '(' expression? ')' | expression? )	 #printFunctionCall
+ | PRINT ( '(' expression? ')' | expression )	 #printFunctionCall
+ | SIZE ( '(' expression ')' | expression )		 #sizeFunctionCall
  | ASSERT expression     				 		 #assertFunctionCall
- | SIZE '(' expression ')'      				 #sizeFunctionCall
+ | EVAL STRING								 	 #evalCall
  ;
 
 ifStatement
@@ -200,6 +201,7 @@ PRINT    : 'print';
 INPUT    : 'input';
 FILE     : 'file';
 ASSERT   : 'assert';
+EVAL   	 : 'eval';
 SIZE     : 'size';
 DEF      : 'def';
 IF       : 'if';

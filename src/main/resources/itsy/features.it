@@ -35,5 +35,7 @@ if b == "y"
 	println "Cool, me too"
 else 
 	println "That's because you haven't tried Itsy"
-	
-println file("pom.xml")
+
+
+println "--- Start/End Printing myself ---	
+println file("features.it")

@@ -6,6 +6,7 @@ import itsy.antlr4.ItsyParser.AndExpressionContext;
 import itsy.antlr4.ItsyParser.AssertFunctionCallContext;
 import itsy.antlr4.ItsyParser.BlockContext;
 import itsy.antlr4.ItsyParser.DivideExpressionContext;
+import itsy.antlr4.ItsyParser.EvalCallContext;
 import itsy.antlr4.ItsyParser.ExpressionContext;
 import itsy.antlr4.ItsyParser.ExpressionExpressionContext;
 import itsy.antlr4.ItsyParser.FileAssignmentContext;
@@ -42,7 +43,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.charset.CharsetDecoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -51,6 +51,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.antlr.v4.runtime.ANTLRFileStream;
+import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -60,11 +61,13 @@ public class EvalVisitor extends ItsyBaseVisitor<ItsyValue> {
     private Scope scope;
     private Map<String, Function> functions;
     private File workingDirectory;
+    private String sourcePath;
     
-    public EvalVisitor(Scope scope, Map<String, Function> functions, File workingDirectory) {
+    public EvalVisitor(Scope scope, Map<String, Function> functions, File workingDirectory, String sourcePath) {
         this.scope = scope;
         this.functions = functions;
         this.workingDirectory = workingDirectory;
+        this.sourcePath = sourcePath;
     }
   
     // importDeclaration
@@ -581,7 +584,7 @@ public class EvalVisitor extends ItsyBaseVisitor<ItsyValue> {
         String id = ctx.IDENTIFIER().getText() + params.size();
         Function function;      
         if ((function = functions.get(id)) != null) {
-            return function.invoke(params, functions, scope, workingDirectory);
+            return function.invoke(params, functions, scope, workingDirectory, sourcePath);
         }
         throw new EvalException(ctx);
     }
@@ -630,6 +633,14 @@ public class EvalVisitor extends ItsyBaseVisitor<ItsyValue> {
         }
 
         throw new EvalException(ctx);
+    }
+    
+    // EVAL STRING								 #evalCall
+    @Override
+    public ItsyValue visitEvalCall(EvalCallContext ctx) {
+    	String evalString = getString(ctx.STRING());
+    	return new Itsy(scope, "Eval in <"+sourcePath+":"+ctx.start.getLine()+">", workingDirectory)
+    		.run(new ANTLRInputStream(evalString));
     }
 
     // ifStatement

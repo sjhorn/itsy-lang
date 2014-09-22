@@ -132,6 +132,8 @@ The [test.it](https://github.com/sjhorn/itsy-lang/blob/master/src/main/itsy/test
 Below is a sample of Itsy in action.
 
 ```
+import "fun.it"
+
 def sayHello(name)
 	println "Hello "+name
 	
@@ -168,5 +170,8 @@ if b == "y"
 else 
 	println "That's because you haven't tried Itsy"
 
-println file("pom.xml")
+eval "println(\"hello world\")"
+
+println "--- Start/End Printing myself ---	
+println file("features.it")
 ```

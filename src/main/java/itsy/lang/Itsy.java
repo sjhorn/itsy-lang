@@ -23,27 +23,32 @@ public class Itsy {
 	File workingDirectory;
 	
 	public Itsy(Scope globalScope, String sourcePath) {
-	    this.globalScope = globalScope;
-	    this.sourcePath = sourcePath;
-	    workingDirectory = new File(sourcePath);
-	    workingDirectory = workingDirectory.isFile() ? workingDirectory.getParentFile() : new File(".");
+		this(globalScope, sourcePath, new File(sourcePath).isFile() ? 
+				new File(sourcePath).getParentFile() : new File("."));
 	}
-	public void run(CharStream source) {
+	
+	public Itsy(Scope globalScope, String sourcePath, File workingDirectory) {
+		this.globalScope = globalScope;
+	    this.sourcePath = sourcePath;
+	    this.workingDirectory = workingDirectory;
+	}
+	
+	public ItsyValue run(CharStream source) {
 		try {
             ItsyLexer lexer = new ItsyLexer(source);
             ItsyParser parser = new ItsyParser(new CommonTokenStream(lexer));
             parser.setBuildParseTree(true);
             ParseTree tree = parser.parse();
             if (parser.getNumberOfSyntaxErrors() != 0) {
-            	return;
+            	return ItsyValue.VOID;
             }
             //System.out.println(tree.toStringTree(parser));
             
             Map<String, Function> functions = new HashMap<String, Function>();
             SymbolVisitor symbolVisitor = new SymbolVisitor(functions);
             symbolVisitor.visit(tree);
-            EvalVisitor visitor = new EvalVisitor(globalScope, functions, workingDirectory);
-            visitor.visit(tree);
+            EvalVisitor visitor = new EvalVisitor(globalScope, functions, workingDirectory, sourcePath);
+            return visitor.visit(tree);
         } catch (AssertionError ae) {
         	System.err.println(sourcePath+": "+ae.getMessage());
         } catch (EvalException ee) {
@@ -52,6 +57,7 @@ public class Itsy {
             System.err.println("Unhandled exception in "+sourcePath+":");
             e.printStackTrace();
         }
+		return ItsyValue.VOID;
 	}
 	
 	public static ANTLRInputStream resourceToString(String resourcePath) throws Exception {
